@@ -1,9 +1,16 @@
-import { scale, sum, v3 } from './vector';
+import { dot, normalize, perpendicular, scale, sub, sum, v3 } from './vector';
 
 export class Line {
-    constructor(public start: v3, public direction: v3) {}
+    public normal: v3
+    constructor(public start: v3, public direction: v3) {
+        this.normal = normalize(perpendicular(direction))
+    }
     getPointOfIntersection(t: number) {
         return sum(this.start, scale(this.direction, t))
+    }
+
+    getSignedDistanceFromPoint(v: v3) {
+        return dot(this.normal, sub(v, this.start))
     }
 
     /**
@@ -23,7 +30,7 @@ export class Line {
         const bottomT = (maxy - starty) / diry
         const backT = (maxz - startz) / dirz
         const out = [leftT, topT, rightT, bottomT, frontT, backT]
-        // This won't work when the starting point is outside of the cube
+        // This won't work when the starting point is outside of the cube. For that to work, maybe just filter if the final points are inside the bounding box
         const positive = Math.min(...out.filter(n => n > 0))
         const negative = Math.max(...out.filter(n => n < 0))
         return [this.getPointOfIntersection(positive), this.getPointOfIntersection(negative)]

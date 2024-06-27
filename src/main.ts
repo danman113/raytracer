@@ -36,6 +36,13 @@ const drawPoint = (point: v3, size = 5) => {
   c.fillRect(x - halfSize, y - halfSize, size, size)
 }
 
+const drawCircle = (point: v3, radius = 5) => {
+  const [x, y, _z] = sum(camera, multiply(point, cameraScale))
+  
+  c.arc(x, y, radius, 0, Math.PI * 2)
+  c.fill()
+}
+
 const colors = [
   'red',
   'green',
@@ -47,8 +54,8 @@ const colors = [
   'purple'
 ]
 
-const topLeft = v3(width / -2, height / -2)
-const bottomRight = v3(width / 2, height / 2)
+const topLeft = v3(width / -2, height / 2)
+const bottomRight = v3(width / 2, height / -2)
 
 const midnight = v3(0, 1)
 const oneThirty = v3(1, 1)
@@ -65,12 +72,18 @@ const offsets = v3(
   0
 )
 let start = v3(0, -50)
+let circlePoint = v3(-50, 50)
+const circleRadius = 40
+
+const screenToWorld = (v: v3) => {
+  const inverseCameraScale = scale(cameraScale, -1)
+  const inverseCamera = multiply(camera, inverseCameraScale)
+  return sum(inverseCamera, multiply(v, cameraScale))
+}
 
 canvas.addEventListener('click', (e) => {
   const mouse = v3(e.offsetX, e.offsetY)
-  const inverseCameraScale = scale(cameraScale, -1)
-  const inverseCamera = multiply(camera, inverseCameraScale)
-  start = sum(inverseCamera, multiply(mouse, cameraScale))
+  start = screenToWorld(mouse)
 })
 
 canvas.addEventListener('wheel', (e) => {
@@ -79,33 +92,54 @@ canvas.addEventListener('wheel', (e) => {
   offsets[1] = Math.sin(degToRad(degrees)) * circleScale
 })
 
+canvas.addEventListener('contextmenu', (e) => {
+  const mouse = v3(e.offsetX, e.offsetY)
+  circlePoint = screenToWorld(mouse)
+})
+
+
 const draw = () => {
   c.clearRect(0, 0, width, height)
   const vectors = [midnight, oneThirty, three, fourThirty, six]
   // for (let i = 0; i < vectors.length; i++) {
-  //   c.strokeStyle = `1px solid ${colors[i]}`
-  //   const line = new Line(ZERO, sum(vectors[i], offsets))
-  //   const bounds = line.getBorderPointsInBoundingBox(topLeft, bottomRight)
+  //   c.strokeStyle = colors[i]
+  //   const line = new Line(ZERO, sum(vectors[i], ZERO))
+  //   const bounds = line.getBorderPointsInBoundingCube(topLeft, bottomRight)
   //   const [left, right] = bounds
   //   drawVector(left, right)
+  //   c.fillStyle = 'red'
+  //   drawPoint(left, 10)
+  //   drawPoint(right, 10)
   // }
 
-  const line = new Line(start, offsets)
-  const [min, max] = line.getBorderPointsInBoundingCube(topLeft, bottomRight)
-  c.strokeStyle = 'red'
-  c.lineWidth = 1
-  drawVector(min, max)
-  c.fillStyle = 'blue'
-  drawPoint(min, 10)
-  drawPoint(max, 10)
-  c.strokeStyle = 'purple'
-  c.lineWidth = 4
-  drawVector(start, sum(start, offsets))
+  {
+    const line = new Line(start, offsets)
+    const [min, max] = line.getBorderPointsInBoundingCube(topLeft, bottomRight)
+    c.strokeStyle = 'red'
+    c.lineWidth = 1
+    drawVector(min, max)
+    c.fillStyle = 'blue'
+    drawPoint(min, 10)
+    drawPoint(max, 10)
+    c.strokeStyle = 'purple'
+    c.lineWidth = 4
+    drawVector(start, sum(start, offsets))
+    c.fillStyle = 'purple'
+    drawVector(start, sum(start, scale(line.normal, 25)))
+    
+    const distance = Math.abs(line.getSignedDistanceFromPoint(circlePoint))
+    c.fillStyle = distance < circleRadius ? 'red' : 'cyan'
+    drawCircle(circlePoint, circleRadius)
+  }
+  
   // for(let i = 0; i < vectors.length; i++) {
   //   c.strokeStyle = colors[i]
   //   c.lineWidth = 4
   //   drawVector(vectors[i])
   // }
+  c.fillStyle = 'purple'
+  drawPoint(topLeft, 20)
+  drawPoint(bottomRight, 20)
   c.fillStyle = 'black'
   c.fillText(`Angle: ${radToDeg(angle(a, b))}`, 10, 10)
   requestAnimationFrame(draw)

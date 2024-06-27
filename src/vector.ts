@@ -22,6 +22,12 @@ export const multiply = (a: v3, b: v3) => {
     return v3(a1 * b1, a2 * b2, a3 * b3)
 }
 
+export const divide = (a: v3, b: v3) => {
+    const [a1, a2, a3] = a
+    const [b1, b2, b3] = b
+    return v3(a1 / b1, a2 / b2, a3 / b3)
+}
+
 export const scale = (v: v3, scalar: number) => {
     const [a1, a2, a3] = v
     return v3(a1 * scalar, a2 * scalar, a3 * scalar)
@@ -37,6 +43,11 @@ export const length = (v: v3) => {
     const [a1, a2, a3] = v
     return Math.sqrt(a1 * a1 + a2 * a2 + a3 * a3)
 }
+
+export const normalize = (v: v3) => scale(v, 1/length(v)) // I think we lose more precision here than if we used a division
+
+// TODO: Figure out how to make this work in 3d after implementing cross products
+export const perpendicular = (v: v3) => v3(-v[1], v[0])
 
 export const angle = (a: v3, b: v3) =>
     Math.acos(dot(a, b) / (length(a) * length(b)))
